@@ -25,7 +25,8 @@
 static void itrunc(struct inode*);
 // there should be one superblock per disk device, but we run with
 // only one device
-struct superblock sb; 
+struct superblock sb;
+int numallocblocks = 0;
 
 // Read the super block.
 void
@@ -75,6 +76,23 @@ balloc(uint dev)
     brelse(bp);
   }
   panic("balloc: out of blocks");
+}
+
+/* Similar to balloc, except allocates eight consecutive
+ * free blocks. It is okay, if you assume that the first
+ * block is always 8 bytes aligned.
+ */
+uint
+balloc_page(uint dev)
+{
+	return -1;
+}
+
+/* Free disk blocks allocated using balloc_page.
+ */
+void
+bfree_page(int dev, uint b)
+{
 }
 
 // Free a disk block.

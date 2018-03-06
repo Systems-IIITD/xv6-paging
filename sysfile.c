@@ -15,6 +15,9 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "fcntl.h"
+#include "paging.h"
+
+extern int numallocblocks;
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -441,5 +444,26 @@ sys_pipe(void)
   }
   fd[0] = fd0;
   fd[1] = fd1;
+  return 0;
+}
+
+/* returns the number of swapped pages
+ */
+int
+sys_bstat(void)
+{
+	return numallocblocks;
+}
+
+/* swap system call handler.
+ */
+int
+sys_swap(void)
+{
+  uint addr;
+
+  if(argint(0, (int*)&addr) < 0)
+    return -1;
+  // swap addr
   return 0;
 }

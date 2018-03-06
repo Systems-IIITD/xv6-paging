@@ -92,6 +92,22 @@ bget(uint dev, uint blockno)
   panic("bget: no buffers");
 }
 
+/* Write 4096 bytes pg to the eight consecutive
+ * starting at blk.
+ */
+void
+write_page_to_disk(uint dev, char *pg, uint blk)
+{
+}
+
+/* Read 4096 bytes from the eight consecutive
+ * starting at blk into pg.
+ */
+void
+read_page_from_disk(uint dev, char *pg, uint blk)
+{
+}
+
 // Return a locked buf with the contents of the indicated block.
 struct buf*
 bread(uint dev, uint blockno)
@@ -122,7 +138,7 @@ brelse(struct buf *b)
 {
   if(!holdingsleep(&b->lock))
     panic("brelse");
-
+	
   releasesleep(&b->lock);
 
   acquire(&bcache.lock);

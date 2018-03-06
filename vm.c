@@ -6,6 +6,8 @@
 #include "mmu.h"
 #include "proc.h"
 #include "elf.h"
+#include "paging.h"
+#include "fs.h"
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -230,16 +232,17 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     return oldsz;
 
   a = PGROUNDUP(oldsz);
+  
   for(; a < newsz; a += PGSIZE){
     mem = kalloc();
     if(mem == 0){
-      cprintf("allocuvm out of memory\n");
+      //cprintf("allocuvm out of memory\n");
       deallocuvm(pgdir, newsz, oldsz);
       return 0;
     }
     memset(mem, 0, PGSIZE);
     if(mappages(pgdir, (char*)a, PGSIZE, V2P(mem), PTE_W|PTE_U) < 0){
-      cprintf("allocuvm out of memory (2)\n");
+      //cprintf("allocuvm out of memory (2)\n");
       deallocuvm(pgdir, newsz, oldsz);
       kfree(mem);
       return 0;
@@ -252,6 +255,7 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 // newsz.  oldsz and newsz need not be page-aligned, nor does newsz
 // need to be less than oldsz.  oldsz can be larger than the actual
 // process size.  Returns the new process size.
+// If the page was swapped free the corresponding disk block.
 int
 deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 {
@@ -297,6 +301,29 @@ freevm(pde_t *pgdir)
   kfree((char*)pgdir);
 }
 
+// Select a page-table entry which is mapped
+// but not accessed. Notice that the user memory
+// is mapped between 0...KERNBASE.
+pte_t*
+select_a_victim(pde_t *pgdir)
+{
+	return 0;
+}
+
+// Clear access bit of a random pte.
+void
+clearaccessbit(pde_t *pgdir)
+{
+}
+
+// return the disk block-id, if the virtual address
+// was swapped, -1 otherwise.
+int
+getswappedblk(pde_t *pgdir, uint va)
+{
+  return -1;
+}
+
 // Clear PTE_U on a page. Used to create an inaccessible
 // page beneath the user stack.
 void
@@ -322,6 +349,7 @@ copyuvm(pde_t *pgdir, uint sz)
 
   if((d = setupkvm()) == 0)
     return 0;
+
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
@@ -331,6 +359,7 @@ copyuvm(pde_t *pgdir, uint sz)
     flags = PTE_FLAGS(*pte);
     if((mem = kalloc()) == 0)
       goto bad;
+
     memmove(mem, (char*)P2V(pa), PGSIZE);
     if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0)
       goto bad;
@@ -355,6 +384,14 @@ uva2ka(pde_t *pgdir, char *uva)
   if((*pte & PTE_U) == 0)
     return 0;
   return (char*)P2V(PTE_ADDR(*pte));
+}
+
+// returns the page table entry corresponding
+// to a virtual address.
+pte_t*
+uva2pte(pde_t *pgdir, uint uva)
+{
+  return walkpgdir(pgdir, (void*)uva, 0);
 }
 
 // Copy len bytes from p to user address va in page table pgdir.

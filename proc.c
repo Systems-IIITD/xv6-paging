@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "paging.h"
 
 struct {
   struct spinlock lock;
@@ -158,19 +159,11 @@ userinit(void)
 int
 growproc(int n)
 {
-  uint sz;
   struct proc *curproc = myproc();
 
-  sz = curproc->sz;
-  if(n > 0){
-    if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
-      return -1;
-  } else if(n < 0){
-    if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
-      return -1;
-  }
-  curproc->sz = sz;
-  switchuvm(curproc);
+  if (n < 0 || n > KERNBASE || curproc->sz + n > KERNBASE)
+	  return -1;
+  curproc->sz += n;
   return 0;
 }
 
@@ -275,6 +268,8 @@ wait(void)
   struct proc *p;
   int havekids, pid;
   struct proc *curproc = myproc();
+  pde_t *pgdir;
+
   
   acquire(&ptable.lock);
   for(;;){
@@ -289,13 +284,15 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        freevm(p->pgdir);
+        pgdir = p->pgdir;
+        p->pgdir = 0;
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
         release(&ptable.lock);
+        freevm(pgdir);
         return pid;
       }
     }
