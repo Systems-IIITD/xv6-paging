@@ -25,6 +25,7 @@ swap_page_from_pte(pte_t *pte)
 int
 swap_page(pde_t *pgdir)
 {
+	panic("swap_page is not implemented");
 	return 1;
 }
 
@@ -36,6 +37,7 @@ swap_page(pde_t *pgdir)
 void
 map_address(pde_t *pgdir, uint addr)
 {
+	panic("map_address is not implemented");
 }
 
 /* page fault handler */
