@@ -90,4 +90,5 @@ main(int argc, char *argv[])
 {
 	printf(1, "memtest starting\n");
 	mem();
+	return 0;
 }
