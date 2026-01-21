@@ -304,13 +304,14 @@ freevm(pde_t *pgdir)
 // Select a page-table entry which is mapped
 // but not accessed. Notice that the user memory
 // is mapped between 0...KERNBASE.
+// return the virtual address of the victim in va
 pte_t*
-select_a_victim(pde_t *pgdir)
+select_a_victim(pde_t *pgdir, uint *va)
 {
 	return 0;
 }
 
-// Clear access bit of a random pte.
+// Clear access bit of 10% random valid ptes (at least one).
 void
 clearaccessbit(pde_t *pgdir)
 {
@@ -387,11 +388,12 @@ uva2ka(pde_t *pgdir, char *uva)
 }
 
 // returns the page table entry corresponding
-// to a virtual address.
+// to a virtual address. if alloc is set allocate
+// pte if doesn't exist already
 pte_t*
-uva2pte(pde_t *pgdir, uint uva)
+uva2pte(pde_t *pgdir, uint uva, int alloc)
 {
-  return walkpgdir(pgdir, (void*)uva, 0);
+  return walkpgdir(pgdir, (void*)uva, alloc);
 }
 
 // Copy len bytes from p to user address va in page table pgdir.
